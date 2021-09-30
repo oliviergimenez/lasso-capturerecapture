@@ -1,0 +1,141 @@
+D-cover
+Hi everyone. My name is Olivier Gimenez. Today I’m gonna talk to you about the Lasso to perform covariate selection in capture-recapture models. This is joint work with Ian Renner from Newcastle University in Australia.
+
+D1
+The context of my talk is that of the inference about abundance and survival of animal species. In statistical ecology, one of our objectives is to try and explain variation in these demographic variables. 
+
+To do so, we often use capture-recapture methods that consist in capturing, marking and releasing individuals and trying to recapture them. 
+
+These are basically survival models that account for the imperfect detection of individuals, or the fact that you may miss an animal in the field even though it is present because it is hidden or you were busy checking your phone. 
+
+The thing is that we struggle more and more with the number of covariates that may explain temporal variation in survival. A number of covariates that increases with the use of new technological developments like remote-sensing and GPS for example. 
+
+We struggle to the extent that we often don’t know which covariates to include or not to include.
+
+D2
+What are the issues with having many, possibly correlated covariates like in this figure here?
+
+Well correlation generates numerical instability in the estimation of parameters.
+
+Also, having many covariates in a model implies a lack of precision on these estimates, and a loss of predictability when it comes to using these models to predict things, the viability of endangered species.
+
+D3
+What do we usually do to deal with these issues? Well there a few things.
+
+First, we think hard about the covariates we’d like to include in our analysis. We try to think of collinearity, drop covariates that tell the same story, and use functions of them. But still, when you have many covariates, this is a nightmare for ecologists. 
+
+Then, to actually select covariates, there are several possible approaches.
+
+You may use the AIC or stepwise procedures if you’re a frequentist. 
+Alternatively, you may use DIC, SSVS or RJMCMC if you’re a Bayesian. 
+
+In this talk, we propose to explore a different approach, to explore another avenue, 
+namely to shrink model parameters in order to select them. 
+
+D4
+Everything I’m gonna explain in this talk can be found in this amazing book by Hastie & Tibshirani “Statistical Learning with Sparsity”, a book that is actually free like many other books by the same authors.
+
+D5
+It all starts with the ridge regression, 
+
+How does that work?
+
+D6
+The idea is, as usually, to try and maximize the likelihood, here in blue. 
+
+D7
+The novelty is that we’re gonna apply a constraint on the regression parameters, we’re gonna penalize the magnitude of the coefficients so that they don’t explode, they don’t take huge values, like it is usually the case when we have multicollinearity.
+
+Here we use the L2 norm, the sum of the squared coefficient should be less than a constant c. Basically, the parameter estimates, the betas hat, should be contained in a disk of radius c.
+
+
+D8
+Now the Lasso. The Lasso is an acronym for Least Absolute Shrinkage and Selection Operator. 
+Why Shrinkage and Selection. You’ll understand in a minute. 
+
+Compared to the ridge regression, the Lasso is obtained by changing the L2 norm in the constraint by the L1 norm. 
+In other words, the constraint is expressed under the form of the sum of the absolute value of the regression coefficients should be less than a constant c. 
+
+
+Let’s have a look to how ridge regression and the lasso work. 
+
+D9
+Let’s assume we have two parameters, say beta1 and beta2. 
+
+On the left we have the lasso, on the right the ridge regression.
+
+The likelihood is represented in both plots by these elliptical contours. If we don’t penalize the likelihood, then the solution of the optimization problem is in the center of the ellipse, here and here. 
+ 
+Now the constraint region for ridge regression is the disk, remember the L2 norm, while that for lasso is the diamond, the L1 norm. 
+
+Both methods find the first point where the elliptical contours hit the constraint region, the two red crosses. If we focus on the ridge regression, the solution is here, for beta1, beta2. Now let us focus on the lasso. Unlike the disk, the diamond has corners; if the solution occurs at a corner, like in our example, then it has one parameter beta_2 equal to zero. This will rarely happen for the ridge regression.  
+
+When there are more than 2 parameters, the diamond has many corners, flat edges, and faces; there are many more opportunities for the estimated parameters to be zero. We use the term sparse for a model with few nonzero coefficients. In passing, the Lasso provides an automatic way for doing covariate selection.
+
+D10
+Now a constrained optimization is not easy. 
+
+It is often convenient to rewrite the lasso problem in the so-called Lagrangian form.
+
+For some positive lambda, the solution is the maximum of the likelihood plus a penalty on 
+the regression parameters. 
+
+[The optim function in R does pretty well, but as you can see in the slides, the coefficients are not exactly 0, whereas for the descent algorithm, they would be. We may use a descent algorithm, but that will require working out the score equations.]
+
+We use an adaptive lasso penalty to ensure that more important covariates – i.e. those with coefficient estimates further away from 0 – will be penalized less. This construction also enables the adaptive lasso to achieve so-called oracle properties, which means that asymptotically, the correct subset of coefficients will be chosen, and the procedure has an optimal estimation rate.
+
+D11
+In this talk, we will illustrate the use of the Lasso by using the likelihood of capture-recapture models.
+
+D12
+What is the likelihood of a standard capture-recapture model?
+
+D13
+Back to the Lasso, the problem boils down to choosing lambda. Usually, we use cross-validation techniques. 
+The brute-force approach also works well. Here, we build a grid of values for lambda. 
+Then repeat optimization for each value of the grid. 
+We pick the lambda corresponding to the model with lowest BIC
+
+[We may use cross validation. It is a nice approach, but there are a few things to consider:
+a. If doing 5-fold CV, you have 5 times as many models to fit
+b. The choice of lambda across the CV groups is a bit tricky. Depending on how to split the data into test and training, a lambda value of, say 2, might represent shrinking by 50%, but for another CV group, it might be 30%. In other words, the minimum lambda that is necessary to shrink all the covariates to 0, will be different across the CV groups.]
+
+D14
+To validate our approach, we conducted a simulation study.
+We considered a sample size of 15 capture occasions, with 15 new individuals marked and released at each occasion. Detection was high, 90%, and mean survival was around 80%. 
+We considered two covariates possibly explaining temporal variation in survival. X1 had a negative effect on survival, on the logit scale, while X2 had no effect on survival. 
+We applied the Lasso and also fitted 4 models, a model with no covariates and constant survival, another model with both covariates and two other models with only X1 or X2. For each of these models we calculated the value of AIC. 
+We repeated these steps a hundred times. 
+
+D15
+In 80% of the simulations, the Lasso selected the correct model, that is the one with X1 only. 
+This result is comparable to the performances we obtained with AIC for variable selection. 
+We did some additional simulations by varying the detection probability and the number of covariates, including collinearity, and the conclusion was similar, the Lasso performs well. 
+
+D16
+As a case study, we considered the demography of white storks in France. These guys spend the winter in Africa, in the Sahel region to be exact. 
+The capture-recapture data we have span over 16 years for more than 200 individually marked guys.
+Also, we had measures of rainfall at weather stations in the Sahel, 10 of them to be exact.
+Our main objective here was to explore the effect of climate conditions on adult survival.
+In other words, which of the 10 betas corresponding to the 10 weather stations are non-zeros?
+If you go for a model selection approach with AIC, it’s 2^10 candidate models that we should consider. How to do with the LASSO approach?
+
+D17
+First thing, we pick the best value for lambda using the BIC. Here we have a graph of the BIC value for each model fitted with a different value of lambda. It appears that lambda around 0.05 gives the lowest BIC. 
+
+D18
+Now let’s have a look to these fits in another way. On the Y-axis, you have the values of the regression parameters corresponding to the 10 weather stations. On the X-axis, the values of lambda on a grid. The vertical line is the value we use for lambda, 0.05, as suggested by the BIC. Let’s follow the path of one regression parameter, that one for example: as lambda increases, the coefficient is pulled to 0 then equals before the red line. Now that one, it’s still non-zero once we’ve passed on the other side of the red line. And this is the only one. What does that mean?
+
+D19
+Let’s have a look to the table of parameter estimates. In the left column, the name of the 10 weather stations. In the right column, the corresponding beta estimates.
+
+All the parameters are estimated at 0, except one, for the Kita station. By shrinking the regression parameter estimates, we selected one single covariate that had a positive effect on survival. This is a similar result to what was obtained by others using a PCA on the rainfall variables first, then fitting the capture-recapture model. 
+
+D20
+In conclusions, we do covariate selection by considering a model with all of them, then shrink the parameters corresponding to the unimportant covariates.
+
+In practice, this is not that difficult to modify existing code to implement the penalized likelihood, which might make the use of Lasso easy in the future in standard pieces of software for the analysis of capture-recapture data.
+
+As a perspective, we’d like to give a Bayesian flavor to the whole thing, more soon.
+
+
