@@ -2,9 +2,9 @@
 
 Material for a talk about using lasso for covariate selection in capture-recapture models. 
 
-* Slides
-* Video recording
-* Transcript
+* [Slides](slides/GimenezRenner-Lassotalk.pdf)
+* [Video recording](video-recording/gimenezrenner-lasso-videorecording.mp4)
+* [Transcript](transcript/transcript-lassocapturerecapture.txt)
 
 **Authors**:    
 Gimenez, Olivier – CNRS Montpellier, France    
